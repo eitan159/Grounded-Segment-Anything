@@ -3,7 +3,7 @@ diffusers
 gradio
 huggingface_hub
 matplotlib
-numpy
+numpy==1.26.4
 onnxruntime
 opencv_python
 Pillow

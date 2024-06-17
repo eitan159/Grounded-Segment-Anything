@@ -88,6 +88,7 @@ def load_model(model_config_path, model_checkpoint_path, device):
 def get_grounding_output(model, image, caption, box_threshold, text_threshold,device="cpu"):
     caption = caption.lower()
     caption = caption.strip()
+    phrases = caption.split(", ")
     if not caption.endswith("."):
         caption = caption + "."
     model = model.to(device)
@@ -114,6 +115,8 @@ def get_grounding_output(model, image, caption, box_threshold, text_threshold,de
     scores = []
     for logit, box in zip(logits_filt, boxes_filt):
         pred_phrase = get_phrases_from_posmap(logit > text_threshold, tokenized, tokenlizer)
+        valid_pred_phrases = [phrase for phrase in pred_phrase.split(" ") if phrase in phrases]
+        pred_phrase = valid_pred_phrases[0] if valid_pred_phrases else pred_phrase
         pred_phrases.append(pred_phrase + f"({str(logit.max().item())[:4]})")
         scores.append(logit.max().item())
 
@@ -138,16 +141,6 @@ def show_box(box, ax, label):
 
 
 def save_masks_data(output_dir, output_file_name, mask_list, box_list, label_list):
-    # value = 0  # 0 for background
-
-    # mask_img = torch.zeros(mask_list.shape[-2:])
-    # for idx, mask in enumerate(mask_list):
-    #     mask_img[mask.cpu().numpy()[0] == True] = value + idx + 1
-    # plt.figure(figsize=(10, 10))
-    # plt.imshow(mask_img.numpy())
-    # plt.axis('off')
-    # plt.savefig(os.path.join(output_dir, 'mask.jpg'), bbox_inches="tight", dpi=300, pad_inches=0.0)
-
     json_data = {'masks':[]}
     for label, box, mask in zip(label_list, box_list, mask_list):
         name, logit = label.split('(')
